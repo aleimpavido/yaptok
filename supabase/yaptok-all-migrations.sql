@@ -4221,8 +4221,6 @@ on conflict (key) do nothing;
 -- Each authenticated user may subscribe only to user:<their auth uid>.
 -- No message body, video id, or other private content is broadcast.
 
-alter table realtime.messages enable row level security;
-
 drop policy if exists "Users receive their own YapChat events" on realtime.messages;
 create policy "Users receive their own YapChat events"
   on realtime.messages
@@ -4246,6 +4244,11 @@ begin
     'user:' || new.receiver_id::text,
     true
   );
+exception
+  -- A recipient who is offline may not have opened today's Realtime
+  -- partition yet. Never let a best-effort notification roll back a message.
+  when others then
+    raise warning 'YapChat realtime notification skipped for message %: %', new.id, sqlerrm;
   return new;
 end;
 $$;
