@@ -4282,7 +4282,7 @@ exception
     raise warning 'YapChat read receipt skipped for message %: %', new.id, sqlerrm;
     return new;
 end;
-$;
+$$;
 
 revoke all on function public.broadcast_message_read() from public, anon, authenticated;
 
