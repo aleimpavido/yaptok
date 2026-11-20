@@ -66,6 +66,7 @@ export function ThreadView({ person, initial, currentUserId }: { person: Creator
     const channel = supabase
       .channel(`user:${currentUserId}`, { config: { private: true } })
       .on("broadcast", { event: "new_message" }, () => void refresh())
+      .on("broadcast", { event: "message_read" }, () => void refresh())
       .subscribe((status) => {
         if (status === "SUBSCRIBED") stopFallback();
         else startFallback();
@@ -129,7 +130,7 @@ export function ThreadView({ person, initial, currentUserId }: { person: Creator
               {m.body && (
                 <p className={`whitespace-pre-wrap break-words rounded-2xl px-3.5 py-2 text-[15px] leading-5 ${m.mine ? "bg-[var(--brand-strong)] text-white" : "bg-hover text-text"}`}>{m.body}</p>
               )}
-              <p className={`mt-0.5 text-[11px] text-text-3 ${m.mine ? "text-right" : ""}`}>{m.pending ? "Sending" : timeAgo(m.createdAt)}</p>
+              <p className={`mt-0.5 text-[11px] text-text-3 ${m.mine ? "text-right" : ""}`}>{m.pending ? "Sending" : m.mine && m.read ? `${timeAgo(m.createdAt)} · Seen` : timeAgo(m.createdAt)}</p>
             </div>
           </li>
         ))}
