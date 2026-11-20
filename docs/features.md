@@ -45,7 +45,7 @@ from `lib/store/session.ts` in the browser.
 | `discover` | Popular hashtags, creators and clips on `/search` before you type | off |
 | `sounds` | Not built yet (later session) | off |
 
-## The feed
+## Messages\n\nDirect messages start with text and shared clips. New messages are announced through a private Supabase Realtime Broadcast topic scoped to the receiving account; the event contains only the message id. The conversation itself is fetched through the existing `dm_thread()` database function, which remains the authorization boundary. The browser falls back to a low-frequency refresh if Realtime is unavailable. See `018_messages_realtime.sql`.\n\n## The feed
 
 `/` is one clip at a time, full screen. Swipe up or down on a phone; on a desk
 use the wheel, the arrow keys, `j` and `k`, or the two buttons. `space` plays
