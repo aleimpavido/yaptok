@@ -8,8 +8,6 @@
 -- Each authenticated user may subscribe only to user:<their auth uid>.
 -- No message body, video id, or other private content is broadcast.
 
-alter table realtime.messages enable row level security;
-
 drop policy if exists "Users receive their own YapChat events" on realtime.messages;
 create policy "Users receive their own YapChat events"
   on realtime.messages
