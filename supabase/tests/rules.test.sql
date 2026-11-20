@@ -360,6 +360,11 @@ select t.is(public.dm_threads() -> 0 -> 'with' ->> 'username', 'cal', 'the conve
 select t.is((public.dm_threads() -> 0 ->> 'unread')::int, 2, 'with its unread count');
 select t.is(jsonb_array_length(public.dm_thread('cal') -> 'messages'), 2, 'the conversation has both messages, oldest first');
 select t.is(public.dm_unread(), 0, 'opening it marks them read');
+reset role;
+select t.is((select count(*)::int from realtime.messages where topic = 'user:00000000-0000-4000-8000-00000000000c' and event = 'message_read'), 2, 'read receipts are broadcast to the original sender');
+select t.login(:cal);
+select set_config('realtime.topic', 'user:00000000-0000-4000-8000-00000000000c', false);
+select t.is((select count(*)::int from realtime.messages where event = 'message_read'), 2, 'the sender can read their own private read receipts');
 select t.login(:owner);
 select t.is(jsonb_array_length(public.dm_threads()), 0, 'nobody sees someone else''s conversations');
 select t.is(jsonb_array_length(public.dm_thread('cal') -> 'messages'), 0, 'or reads them by asking for one side');
