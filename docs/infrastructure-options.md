@@ -25,7 +25,7 @@ Reasons:
 1. The current project already relies on Postgres functions and row-level security for authorization. Replacing these prematurely would create a large security-sensitive rewrite.
 2. Supabase Free's published Realtime allowance (200 peak connections and 2 million messages/month) is a reasonable starting point for a 100-user community, provided the app subscribes only to the user's own channel and sends tiny event payloads.
 3. Cloudflare R2 is already integrated for media and is a strong candidate to retain. Its free tier includes 10 GB-month storage, 1 million Class A operations, 10 million Class B operations and no egress charges.
-4. The best immediate cost reduction is to remove paid Hetzner dependencies and test the existing Next.js app on a free-compatible host, rather than replacing a working database/auth stack at the same time.
+4. The best immediate cost reduction is to remove paid Hetzner dependencies and test the existing Next.js app on Cloudflare Workers, rather than replacing a working database/auth stack at the same time. Cloudflare now recommends vinext for Next.js 16+, but vinext is still beta; its own documentation says to run the compatibility check and review gaps before production. OpenNext is the documented adapter for maintaining existing applications, but Cloudflare recommends moving to vinext when compatibility allows. The project uses Next.js proxy/middleware and Node.js packages, so this must be tested in a separate preview deployment before replacing the current host.
 
 ## Migration gates
 
@@ -50,7 +50,7 @@ Before any backend migration, require:
 - Appwrite pricing: https://appwrite.io/pricing
 - Appwrite Free plan behavior: https://appwrite.io/docs/advanced/billing/free
 - Appwrite Realtime quotas: https://appwrite.io/changelog/entry/2026-03-19
-- Cloudflare Workers pricing: https://www.cloudflare.com/plans/
+- Cloudflare Workers pricing: https://www.cloudflare.com/plans/\n- Cloudflare Next.js / vinext deployment guide: https://developers.cloudflare.com/workers/framework-guides/web-apps/nextjs/\n- Cloudflare OpenNext adapter guide: https://developers.cloudflare.com/workers/framework-guides/web-apps/opennext/
 - Cloudflare D1 pricing: https://developers.cloudflare.com/d1/platform/pricing/
 - Cloudflare Durable Objects pricing: https://developers.cloudflare.com/durable-objects/platform/pricing/
 - Convex limits: https://docs.convex.dev/production/state/limits
