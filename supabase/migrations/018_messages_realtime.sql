@@ -31,12 +31,13 @@ begin
     'user:' || new.receiver_id::text,
     true
   );
+  return new;
 exception
   -- A recipient who is offline may not have opened today's Realtime
   -- partition yet. Never let a best-effort notification roll back a message.
   when others then
     raise warning 'YapChat realtime notification skipped for message %: %', new.id, sqlerrm;
-  return new;
+    return new;
 end;
 $$;
 
