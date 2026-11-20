@@ -42,6 +42,8 @@ export function ThreadView({ person, initial, currentUserId }: { person: Creator
         const res = await callRpc("dm_thread", { p_username: person.username });
         const thread = res.ok ? readThread(res.data) : null;
         if (thread) setMessages((have) => mergeMessages(have, thread.messages));
+      } catch {
+        // Realtime is best-effort; the next event or fallback poll retries.
       } finally {
         refreshing = false;
       }
@@ -54,6 +56,11 @@ export function ThreadView({ person, initial, currentUserId }: { person: Creator
       fallback = undefined;
     };
 
+    const onVisibility = () => {
+      if (!document.hidden) void refresh();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+
     // Start with a conservative fallback until the private channel is ready.
     startFallback();
     const channel = supabase
@@ -65,6 +72,7 @@ export function ThreadView({ person, initial, currentUserId }: { person: Creator
       });
 
     return () => {
+      document.removeEventListener("visibilitychange", onVisibility);
       stopFallback();
       void supabase.removeChannel(channel);
     };
