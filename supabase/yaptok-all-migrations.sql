@@ -1,4 +1,4 @@
--- YapTok: every migration in supabase/migrations, in order (18 files).
+-- YapTok: every migration in supabase/migrations, in order (19 files).
 
 -- ===== 000_init.sql =====
 -- 000_init.sql
