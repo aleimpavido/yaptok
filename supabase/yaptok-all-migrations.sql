@@ -4267,7 +4267,7 @@ returns trigger
 language plpgsql
 security definer
 set search_path = ''
-as $
+as $$
 begin
   perform realtime.send(
     jsonb_build_object('message_id', new.id),
