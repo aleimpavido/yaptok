@@ -48,3 +48,34 @@ create trigger messages_broadcast_insert
   after insert on public.messages
   for each row
   execute function public.broadcast_direct_message();
+
+create or replace function public.broadcast_message_read()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $
+begin
+  perform realtime.send(
+    jsonb_build_object('message_id', new.id),
+    'message_read',
+    'user:' || new.sender_id::text,
+    true
+  );
+  return new;
+exception
+  -- Read receipts are best-effort and must never block the conversation.
+  when others then
+    raise warning 'YapChat read receipt skipped for message %: %', new.id, sqlerrm;
+    return new;
+end;
+$;
+
+revoke all on function public.broadcast_message_read() from public, anon, authenticated;
+
+drop trigger if exists messages_broadcast_read on public.messages;
+create trigger messages_broadcast_read
+  after update of read_at on public.messages
+  for each row
+  when (old.read_at is null and new.read_at is not null)
+  execute function public.broadcast_message_read();
