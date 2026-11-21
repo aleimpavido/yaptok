@@ -49,7 +49,11 @@ from `lib/store/session.ts` in the browser.
 | `prestige` | XP ledger and levels earned through validated activity | off |
 | `collection` | Free cosmetics unlocked through earned XP and levels | off |
 
-## Messages\n\nDirect messages start with text and shared clips. New messages and read receipts are announced through private Supabase Realtime Broadcast topics scoped to the relevant account; events contain only the message id. Conversation contents are fetched through the existing `dm_thread()` database function, which remains the authorization boundary. The browser falls back to a low-frequency refresh if Realtime is unavailable and refreshes when a hidden tab becomes visible. See `018_messages_realtime.sql`.\n\n## The feed
+## Messages
+
+Direct messages start with text and shared clips. New messages and read receipts are announced through private Supabase Realtime Broadcast topics scoped to the relevant account; events contain only the message id. Conversation contents are fetched through the existing `dm_thread()` database function, which remains the authorization boundary. The browser falls back to a low-frequency refresh if Realtime is unavailable and refreshes when a hidden tab becomes visible. See `018_messages_realtime.sql`.
+
+## The feed
 
 `/` is one clip at a time, full screen. Swipe up or down on a phone; on a desk
 use the wheel, the arrow keys, `j` and `k`, or the two buttons. `space` plays
@@ -179,6 +183,6 @@ Migration `019_yap_progress_reposts.sql` adds the database foundation:
 - YapStreak derives daily activity from public, ready, non-removed clips in the creator's validated IANA timezone. Multiple posts on one local day count once; a removed, private, failed or deleted clip does not count. The progress RPC returns a 90-day calendar, current streak and best streak.
 - YapRepost stores only a reference to the original video. It does not copy the video row, HLS files or media. It includes a profile list RPC and a followed-creators repost feed RPC.
 - Prestige stores XP in a server-controlled ledger with unique source keys. The first valid public post per local day and each distinct repost can earn XP while the Prestige flag is enabled. Levels are derived from the ledger.
-- Collection seeds a free cosmetic catalogue. Claiming a cosmetic checks XP and level on the database; there is no purchase path or paid item.
+- Collection seeds a free cosmetic catalogue. Claiming and equipping a cosmetic checks XP, level and ownership on the database; there is no purchase path or paid item.
 
 These are backend foundations, not a finished UI. All four flags start OFF. Do not enable them until the migration, SQL tests, and client integration have been verified on a disposable database.
