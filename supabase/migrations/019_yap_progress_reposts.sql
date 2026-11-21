@@ -44,13 +44,27 @@ alter table public.videos
   add column if not exists repost_count integer not null default 0;
 
 -- Extend every normal feed/profile card with the viewer's repost state.
+
+
+
+create table if not exists public.reposts (
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  video_id uuid not null references public.videos(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (user_id, video_id)
+);
+
+create index if not exists reposts_user_idx on public.reposts(user_id, created_at desc);
+create index if not exists reposts_video_idx on public.reposts(video_id, created_at desc);
+
+-- Extend every normal feed/profile card with the viewer's repost state.
 create or replace function public.video_card(v public.videos, viewer uuid)
 returns jsonb
 language sql
 stable
 security definer
 set search_path = ''
-as $
+as $q$
   select jsonb_build_object(
     'id', v.id,
     'caption', v.caption,
@@ -90,18 +104,7 @@ as $
   )
   from public.profiles p
   where p.id = v.owner_id;
-$;
-
-
-create table if not exists public.reposts (
-  user_id uuid not null references public.profiles(id) on delete cascade,
-  video_id uuid not null references public.videos(id) on delete cascade,
-  created_at timestamptz not null default now(),
-  primary key (user_id, video_id)
-);
-
-create index if not exists reposts_user_idx on public.reposts(user_id, created_at desc);
-create index if not exists reposts_video_idx on public.reposts(video_id, created_at desc);
+$q$;
 
 alter table public.reposts enable row level security;
 drop policy if exists "public reposts of public clips are readable" on public.reposts;
