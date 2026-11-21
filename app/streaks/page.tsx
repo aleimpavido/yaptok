@@ -91,6 +91,10 @@ async function StreakContent() {
             </div>
           </section>
 
+          {progress.current_streak > 0 && !progress.calendar.find((day) => day.date === progress.today)?.posted && (
+            <p className="mt-4 rounded-xl border border-divider bg-panel p-4 text-[13px] leading-5 text-text-2">Your streak is still active. One valid public post before midnight in {progress.timezone} will keep it going. If you miss a day, you can simply start again.</p>
+          )}
+
           <section className="mt-5 rounded-2xl border border-divider p-5">
             <h2 className="font-semibold text-text">How it works</h2>
             <p className="mt-2 text-[14px] leading-6 text-text-2">Publish at least one public video that finishes processing each local day. More posts on the same day do not increase the streak. Private, failed, deleted or moderation-removed videos do not count.</p>
