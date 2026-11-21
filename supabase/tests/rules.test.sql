@@ -419,6 +419,8 @@ select t.is(t.err($q$select public.equip_cosmetic('frame_spark')$q$), 'cosmetic_
 
 select t.is((public.toggle_repost(:clip, true) ->> 'reposted')::boolean, true, 'a public clip can be reposted');
 select t.is((public.toggle_repost(:clip, true) ->> 'repost_count')::integer, 1, 'reposting twice does not duplicate the count');
+select t.is((public.video_by_id(:clip) ->> 'reposted')::boolean, true, 'the normal video card reports the viewer repost state');
+select t.is((public.video_by_id(:clip) ->> 'repost_count')::integer, 1, 'the normal video card reports the repost count');
 select t.is(jsonb_array_length(public.my_reposts('cal')), 1, 'the profile repost list references the original clip');
 select t.is(jsonb_array_length(public.following_reposts()), 1, 'the Following repost feed includes followed creators');
 select t.is((public.my_yap_progress() ->> 'xp')::integer, 5, 'a unique repost earns the configured XP once');
