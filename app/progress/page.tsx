@@ -14,16 +14,19 @@ async function RewardsContent() {
   if (!readSupabaseConfig()) return <DbNotConnected />;
   const user = await getCurrentUser();
   if (!user) redirect("/login?next=/progress");
-  const [streaks, prestige, collection] = await Promise.all([
+  const [streaks, prestige, collection, reposts] = await Promise.all([
     flagOn("streaks", user.id),
     flagOn("prestige", user.id),
     flagOn("collection", user.id),
+    flagOn("reposts", user.id),
   ]);
-  if (!streaks && !prestige && !collection) notFound();
+  if (!streaks && !prestige && !collection && !reposts) notFound();
   const cards = [
     streaks && { href: "/streaks", title: "YapStreak", description: "Keep your personal daily posting streak alive." },
     prestige && { href: "/prestige", title: "YapTok Prestige", description: "Earn XP, levels and milestone rewards." },
     collection && { href: "/collection", title: "YapTok Collection", description: "Unlock and equip free profile and chat cosmetics." },
+    reposts && { href: "/reposts", title: "Your Reposts", description: "Find every public clip you have reposted." },
+    reposts && { href: "/following/reposts", title: "Following Reposts", description: "See what the creators you follow have reposted." },
   ].filter((item): item is { href: string; title: string; description: string } => item !== false);
   return (
     <main className="mx-auto max-w-[720px] px-4 py-8 sm:px-6">
