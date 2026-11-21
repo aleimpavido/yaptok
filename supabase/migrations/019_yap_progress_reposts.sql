@@ -470,7 +470,7 @@ begin
     where user_id = me and cosmetic_id = item.id;
   return jsonb_build_object('equipped', item.id, 'category', item.category);
 end;
-$;
+$q$;
 
 revoke execute on function public.toggle_repost(uuid, boolean) from public, anon;
 revoke execute on function public.my_reposts(text, int, timestamptz) from public, anon;
