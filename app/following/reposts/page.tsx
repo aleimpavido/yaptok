@@ -45,7 +45,7 @@ async function FollowingRepostsContent() {
       {error ? <p role="alert" className="mt-6 text-[14px] text-text-2">Reposts could not be loaded.</p> : rows.length === 0 ? <p className="mt-8 rounded-2xl border border-divider p-5 text-[14px] text-text-2">No reposts from people you follow yet.</p> : (
         <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
           {rows.map((row) => <Link key={row.id + row.reposted_at} href={`/v/${row.id}`} className="overflow-hidden rounded-2xl border border-divider bg-panel">
-            {row.thumbnail_url ? <><span className="sr-only">Video thumbnail</span>{/* eslint-disable-next-line @next/next/no-img-element -- thumbnails are served from the configured media bucket */}\n            <img src={row.thumbnail_url} alt="" className="aspect-[9/16] w-full bg-hover object-cover" /></> : <div className="aspect-[9/16] bg-hover" />}
+            {row.thumbnail_url ? <div role="img" aria-label="Video thumbnail" style={{ backgroundImage: `url("${row.thumbnail_url}")` }} className="aspect-[9/16] w-full bg-hover bg-cover bg-center" /> : <div className="aspect-[9/16] bg-hover" />}
             <div className="p-3"><p className="line-clamp-2 text-[13px] text-text">{row.caption || "Video"}</p><p className="mt-1 text-[11px] text-text-3">Reposted by @{row.reposted_by ?? "creator"} · Original by @{row.author?.username ?? "creator"}</p></div>
           </Link>)}
         </div>
