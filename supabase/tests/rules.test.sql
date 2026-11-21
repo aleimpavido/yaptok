@@ -403,6 +403,34 @@ select t.is(jsonb_array_length(public.follow_list('bea', 'following') -> 'people
 select t.is(public.follow_list('nobody_here', 'followers'), null, 'no such account, no list');
 select t.is(public.follow_list('bea', 'friends'), null, 'only the two kinds exist');
 
+-- YapTok progress, reposts and free cosmetics --------------------------------------------
+
+reset role;
+update public.feature_flags set mode = 'everyone'
+ where key in ('streaks','reposts','prestige','collection');
+
+select t.login(:cal);
+select t.is(public.set_my_timezone('Europe/Berlin'), 'Europe/Berlin', 'a valid IANA timezone is saved');
+select t.is(t.err($select public.set_my_timezone('Not/A_Real_Zone')$), 'timezone_invalid', 'an invalid timezone is refused');
+select t.is(t.err($select * from public.prestige_xp$), 'permission denied for table prestige_xp', 'XP cannot be read or forged directly');
+select t.is(t.err($insert into public.prestige_xp(user_id,source_key,amount) values (auth.uid(),'fake',999)$), 'permission denied for table prestige_xp', 'clients cannot award themselves XP');
+select t.is(t.err($select public.claim_cosmetic('frame_spark')$), 'cosmetic_locked', 'cosmetics require earned XP and level');
+
+select t.is((public.toggle_repost(:clip, true) ->> 'reposted')::boolean, true, 'a public clip can be reposted');
+select t.is((public.toggle_repost(:clip, true) ->> 'repost_count')::integer, 1, 'reposting twice does not duplicate the count');
+select t.is(jsonb_array_length(public.my_reposts('cal')), 1, 'the profile repost list references the original clip');
+select t.is(jsonb_array_length(public.following_reposts()), 1, 'the Following repost feed includes followed creators');
+select t.is((public.my_yap_progress() ->> 'xp')::integer, 5, 'a unique repost earns the configured XP once');
+select t.is(jsonb_array_length(public.my_yap_progress() -> 'calendar'), 90, 'the streak calendar covers 90 local days');
+select t.is((public.my_yap_progress() ->> 'current_streak')::integer, 0, 'no valid daily post means no active streak');
+select t.is((public.toggle_repost(:clip, false) ->> 'reposted')::boolean, false, 'a repost can be removed');
+select t.is((public.toggle_repost(:clip, true) ->> 'reposted')::boolean, true, 'a removed repost can be restored');
+select t.is((public.my_yap_progress() ->> 'xp')::integer, 5, 'retries do not duplicate repost XP');
+
+select t.is(t.err($select public.toggle_repost('00000000-0000-4000-8000-00000000000c', true)$), 'not_found', 'a missing clip cannot be reposted');
+select t.login(:bea);
+select t.is(t.err(format($select public.toggle_repost(%L, true)$, :clip)), 'cannot_repost_own', 'creators cannot repost their own clip');
+
 -- Reports and moderation --------------------------------------------------------------------
 
 select t.login(:cal);
