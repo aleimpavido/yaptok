@@ -253,7 +253,8 @@ declare
   zone text;
   local_day date;
 begin
-  if new.visibility <> 'public' or new.status <> 'ready' or new.removed_at is not null then
+  if new.visibility <> 'public' or new.status <> 'ready' or new.removed_at is not null
+     or not public.flag_on('prestige', new.owner_id) then
     return new;
   end if;
   select p.timezone into zone from public.profiles p
@@ -279,7 +280,9 @@ security definer
 set search_path = ''
 as $$
 begin
-  perform public.award_prestige_xp(new.user_id, 'repost:' || new.video_id::text, 5);
+  if public.flag_on('prestige', new.user_id) then
+    perform public.award_prestige_xp(new.user_id, 'repost:' || new.video_id::text, 5);
+  end if;
   return new;
 end;
 $$;
@@ -357,7 +360,9 @@ declare
   calendar jsonb;
 begin
   if me is null then raise exception 'not_signed_in' using errcode = 'P0001'; end if;
-  if not public.flag_on('streaks', me) then raise exception 'streaks_off' using errcode = 'P0001'; end if;
+  if not (public.flag_on('streaks', me) or public.flag_on('prestige', me)) then
+    raise exception 'streaks_off' using errcode = 'P0001';
+  end if;
   if public.is_banned(me) then raise exception 'banned' using errcode = 'P0001'; end if;
 
   select coalesce(p.timezone,'UTC') into zone from public.profiles p where p.id = me;
