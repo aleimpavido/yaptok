@@ -415,6 +415,7 @@ select t.is(t.err($q$select public.set_my_timezone('Not/A_Real_Zone')$q$), 'time
 select t.is(t.err($q$select * from public.prestige_xp$q$), 'permission denied for table prestige_xp', 'XP cannot be read or forged directly');
 select t.is(t.err($q$insert into public.prestige_xp(user_id,source_key,amount) values (auth.uid(),'fake',999)$q$), 'permission denied for table prestige_xp', 'clients cannot award themselves XP');
 select t.is(t.err($q$select public.claim_cosmetic('frame_spark')$q$), 'cosmetic_locked', 'cosmetics require earned XP and level');
+select t.is(t.err($q$select public.equip_cosmetic('frame_spark')$q$), 'cosmetic_locked', 'only an earned cosmetic can be equipped');
 
 select t.is((public.toggle_repost(:clip, true) ->> 'reposted')::boolean, true, 'a public clip can be reposted');
 select t.is((public.toggle_repost(:clip, true) ->> 'repost_count')::integer, 1, 'reposting twice does not duplicate the count');
