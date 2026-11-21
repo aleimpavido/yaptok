@@ -449,7 +449,7 @@ language plpgsql
 volatile
 security definer
 set search_path = ''
-as $
+as $q$
 declare
   me uuid := (select auth.uid());
   item public.prestige_cosmetics;
@@ -462,6 +462,7 @@ begin
     where c.id = p_cosmetic and c.active;
   if item.id is null then raise exception 'cosmetic_locked' using errcode = 'P0001'; end if;
 
+  perform pg_advisory_xact_lock(hashtextextended('cosmetic:' || me::text || ':' || item.category, 0));
   update public.user_cosmetics uc set equipped = false
     from public.prestige_cosmetics c
     where uc.user_id = me and uc.cosmetic_id = c.id and c.category = item.category;
