@@ -58,6 +58,9 @@ function useNavItems(): Item[] {
     const href = `/@${user.username}`;
     items.push({ key: "profile", href, label: "Profile", icon: <UserIcon className="h-6 w-6" />, active: path === href || path === `/u/${user.username}` });
   }
+  if (user && (flags.streaks || flags.prestige || flags.collection)) {
+    items.push({ key: "rewards", href: "/progress", label: "Rewards", icon: <UserIcon className="h-6 w-6" />, active: path.startsWith("/progress") || path.startsWith("/streaks") || path.startsWith("/prestige") || path.startsWith("/collection") });
+  }
   if (!user && flags.accounts) {
     items.push({ key: "login", href: "/login", label: "Sign in", icon: <UserIcon className="h-6 w-6" />, active: path === "/login" || path === "/signup" });
   }
