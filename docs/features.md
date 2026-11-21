@@ -185,4 +185,4 @@ Migration `019_yap_progress_reposts.sql` adds the database foundation:
 - Prestige stores XP in a server-controlled ledger with unique source keys. The first valid public post per local day and each distinct repost can earn XP while the Prestige flag is enabled. Levels are derived from the ledger.
 - Collection seeds a free cosmetic catalogue. Claiming and equipping a cosmetic checks XP, level and ownership on the database; there is no purchase path or paid item.
 
-These are backend foundations, not a finished UI. All four flags start OFF. Do not enable them until the migration, SQL tests, and client integration have been verified on a disposable database.
+Basic user-facing pages now exist at `/streaks`, `/prestige` and `/collection`, and the feed action rail includes Repost. The profile repost tab and mixed Following timeline are still pending. All four flags start OFF. Do not enable them until the migration, SQL tests, and end-to-end client integration have been verified on a disposable database.
