@@ -4,7 +4,7 @@ The goal: everything people expect from an app of this kind, finished to a
 high standard, with YapTok's own name, mark and look. One feature per session,
 each behind its flag in `/admin`.
 
-Status on 2026-11-21: **13 built, 10 partial, 9 missing** (32 items). Branches, each stacked on the one before: `feature/player-polish`, `feature/following-feed`, `feature/saves`, `feature/discover`, `feature/follow-lists`, `feature/comment-threads`, `feature/inbox`, `feature/messages`.
+Status on 2026-11-21: **13 built, 13 partial, 8 missing** (34 items). Branches, each stacked on the one before: `feature/player-polish`, `feature/following-feed`, `feature/saves`, `feature/discover`, `feature/follow-lists`, `feature/comment-threads`, `feature/inbox`, `feature/messages`.
 
 ## Checklist
 
