@@ -1,4 +1,4 @@
--- YapTok: every migration in supabase/migrations, in order (19 files).
+-- YapTok: every migration in supabase/migrations, in order (20 files).
 
 -- ===== 000_init.sql =====
 -- 000_init.sql
@@ -4469,6 +4469,7 @@ as $$
     join public.profiles actor on actor.id = x.user_id
     where lower(actor.username) = lower(p_username)
       and actor.banned_at is null
+      and public.flag_on('reposts', (select auth.uid()))
       and (x.user_id = (select auth.uid()) or public.flag_on('profiles', (select auth.uid())))
       and (p_before is null or x.created_at < p_before)
     order by x.created_at desc
@@ -4684,11 +4685,11 @@ begin
   level_now := greatest(1, floor(sqrt(greatest(xp_total,0)::numeric / 100))::integer + 1);
 
   select coalesce(jsonb_agg(jsonb_build_object(
-    'date', d::text,
+    'date', d::date::text,
     'posted', exists (
       select 1 from public.videos v where v.owner_id = me
         and v.visibility = 'public' and v.status = 'ready' and v.removed_at is null
-        and v.published_at is not null and (v.published_at at time zone zone)::date = d
+        and v.published_at is not null and (v.published_at at time zone zone)::date = d::date
     )
   ) order by d), '[]'::jsonb)
   into calendar from generate_series(today_local - 89, today_local, interval '1 day') as g(d);
@@ -4702,7 +4703,7 @@ begin
 end;
 $$;
 
--- Claim/equip only cosmetics whose requirements have actually been earned.
+-- Claim only cosmetics whose requirements have actually been earned.
 create or replace function public.claim_cosmetic(p_cosmetic text)
 returns jsonb
 language plpgsql
@@ -4736,16 +4737,49 @@ $$;
 
 revoke execute on function public.reposts_count() from public, anon, authenticated;
 revoke execute on function public.notify_on_repost() from public, anon, authenticated;
+
+-- Equip one already-earned cosmetic per category. This only changes the
+-- signed-in user's own selection; it cannot unlock or purchase an item.
+create or replace function public.equip_cosmetic(p_cosmetic text)
+returns jsonb
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $
+declare
+  me uuid := (select auth.uid());
+  item public.prestige_cosmetics;
+begin
+  if me is null then raise exception 'not_signed_in' using errcode = 'P0001'; end if;
+  if not public.flag_on('collection', me) then raise exception 'collection_off' using errcode = 'P0001'; end if;
+  if public.is_banned(me) then raise exception 'banned' using errcode = 'P0001'; end if;
+  select c.* into item from public.prestige_cosmetics c
+    join public.user_cosmetics uc on uc.cosmetic_id = c.id and uc.user_id = me
+    where c.id = p_cosmetic and c.active;
+  if item.id is null then raise exception 'cosmetic_locked' using errcode = 'P0001'; end if;
+
+  update public.user_cosmetics uc set equipped = false
+    from public.prestige_cosmetics c
+    where uc.user_id = me and uc.cosmetic_id = c.id and c.category = item.category;
+  update public.user_cosmetics set equipped = true
+    where user_id = me and cosmetic_id = item.id;
+  return jsonb_build_object('equipped', item.id, 'category', item.category);
+end;
+$;
+
 revoke execute on function public.toggle_repost(uuid, boolean) from public, anon;
 revoke execute on function public.my_reposts(text, int, timestamptz) from public, anon;
 revoke execute on function public.following_reposts(int, timestamptz) from public, anon;
 revoke execute on function public.my_yap_progress() from public, anon;
 revoke execute on function public.claim_cosmetic(text) from public, anon;
+revoke execute on function public.equip_cosmetic(text) from public, anon;
 grant execute on function public.toggle_repost(uuid, boolean) to authenticated;
 grant execute on function public.my_reposts(text, int, timestamptz) to authenticated;
 grant execute on function public.following_reposts(int, timestamptz) to authenticated;
 grant execute on function public.my_yap_progress() to authenticated;
 grant execute on function public.claim_cosmetic(text) to authenticated;
+grant execute on function public.equip_cosmetic(text) to authenticated;
 
 insert into public.feature_flags(key,label,description,mode)
 values
