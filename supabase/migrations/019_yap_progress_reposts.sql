@@ -437,6 +437,8 @@ begin
 end;
 $$;
 
+revoke execute on function public.reposts_count() from public, anon, authenticated;
+revoke execute on function public.notify_on_repost() from public, anon, authenticated;
 revoke execute on function public.toggle_repost(uuid, boolean) from public, anon;
 revoke execute on function public.my_reposts(text, int, timestamptz) from public, anon;
 revoke execute on function public.following_reposts(int, timestamptz) from public, anon;
