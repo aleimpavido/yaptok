@@ -402,7 +402,7 @@ declare
   calendar jsonb;
 begin
   if me is null then raise exception 'not_signed_in' using errcode = 'P0001'; end if;
-  if not (public.flag_on('streaks', me) or public.flag_on('prestige', me)) then
+  if not (public.flag_on('streaks', me) or public.flag_on('prestige', me) or public.flag_on('collection', me)) then
     raise exception 'streaks_off' using errcode = 'P0001';
   end if;
   if public.is_banned(me) then raise exception 'banned' using errcode = 'P0001'; end if;
