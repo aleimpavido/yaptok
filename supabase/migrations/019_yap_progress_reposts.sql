@@ -253,6 +253,7 @@ as $$
 declare
   zone text;
   local_day date;
+  streak_days integer := 0;
 begin
   if new.visibility <> 'public' or new.status <> 'ready' or new.removed_at is not null
      or not public.flag_on('prestige', new.owner_id) then
@@ -263,6 +264,30 @@ begin
   if zone is null then return new; end if;
   local_day := (coalesce(new.published_at, now()) at time zone zone)::date;
   perform public.award_prestige_xp(new.owner_id, 'daily_post:' || local_day::text, 20);
+
+  -- One-time milestone bonuses; the ledger key prevents repeat claims.
+  with days as (
+    select distinct (v.published_at at time zone zone)::date as day
+    from public.videos v
+    where v.owner_id = new.owner_id and v.visibility = 'public'
+      and v.status = 'ready' and v.removed_at is null and v.published_at is not null
+  ), grouped as (
+    select day, day - (row_number() over(order by day))::integer as grp from days
+  )
+  select count(*)::integer into streak_days
+    from grouped
+    where grp = (select grp from grouped order by day desc limit 1);
+  if streak_days = 3 then
+    perform public.award_prestige_xp(new.owner_id, 'streak_milestone:3', 20);
+  elsif streak_days = 7 then
+    perform public.award_prestige_xp(new.owner_id, 'streak_milestone:7', 50);
+  elsif streak_days = 14 then
+    perform public.award_prestige_xp(new.owner_id, 'streak_milestone:14', 100);
+  elsif streak_days = 30 then
+    perform public.award_prestige_xp(new.owner_id, 'streak_milestone:30', 250);
+  elsif streak_days = 100 then
+    perform public.award_prestige_xp(new.owner_id, 'streak_milestone:100', 1000);
+  end if;
   return new;
 end;
 $$;
@@ -280,9 +305,25 @@ language plpgsql
 security definer
 set search_path = ''
 as $$
+declare
+  zone text;
+  today_local date;
+  repost_rewards_today integer;
 begin
   if public.flag_on('prestige', new.user_id) then
-    perform public.award_prestige_xp(new.user_id, 'repost:' || new.video_id::text, 5);
+    select p.timezone into zone from public.profiles p
+      where p.id = new.user_id and p.banned_at is null;
+    zone := coalesce(zone, 'UTC');
+    today_local := (now() at time zone zone)::date;
+    select count(*)::integer into repost_rewards_today
+      from public.prestige_xp x
+      where x.user_id = new.user_id
+        and left(x.source_key, 7) = 'repost:'
+        and (x.created_at at time zone zone)::date = today_local;
+    -- Hard daily cap: repost XP cannot be farmed by mass reposting.
+    if repost_rewards_today < 10 then
+      perform public.award_prestige_xp(new.user_id, 'repost:' || new.video_id::text, 5);
+    end if;
   end if;
   return new;
 end;
