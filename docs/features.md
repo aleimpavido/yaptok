@@ -181,7 +181,7 @@ tool: it is not Supabase, and it never runs in production.
 Migration `019_yap_progress_reposts.sql` adds the database foundation:
 
 - YapStreak derives daily activity from public, ready, non-removed clips in the creator's validated IANA timezone. Multiple posts on one local day count once; a removed, private, failed or deleted clip does not count. The progress RPC returns a 90-day calendar, current streak and best streak.
-- YapRepost stores only a reference to the original video. It does not copy the video row, HLS files or media. It includes a profile list RPC and a followed-creators repost feed RPC.
+- YapRepost stores only a reference to the original video. It does not copy the video row, HLS files or media. It includes `/reposts` for the user's reposts and `/following/reposts` for followed creators, backed by profile-list and following-feed RPCs.
 - Prestige stores XP in a server-controlled ledger with unique source keys. The first valid public post per local day and each distinct repost can earn XP while the Prestige flag is enabled. Levels are derived from the ledger.
 - Collection seeds a free cosmetic catalogue. Claiming and equipping a cosmetic checks XP, level and ownership on the database; there is no purchase path or paid item.
 
