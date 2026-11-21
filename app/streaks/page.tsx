@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import Link from "next/link";
+import { TimezoneForm } from "@/components/streaks/TimezoneForm";
 import { DbNotConnected } from "@/components/auth/AuthCard";
 import { getCurrentUser } from "@/lib/auth";
 import { flagOn } from "@/lib/flags";
@@ -93,7 +94,8 @@ async function StreakContent() {
           <section className="mt-5 rounded-2xl border border-divider p-5">
             <h2 className="font-semibold text-text">How it works</h2>
             <p className="mt-2 text-[14px] leading-6 text-text-2">Publish at least one public video that finishes processing each local day. More posts on the same day do not increase the streak. Private, failed, deleted or moderation-removed videos do not count.</p>
-            <p className="mt-2 text-[13px] text-text-3">Your calendar follows the {progress.timezone} timezone. You can change your timezone in account settings when that setting is added.</p>
+            <p className="mt-2 text-[13px] text-text-3">Your calendar follows your IANA timezone. Set it here so day boundaries match your local time.</p>
+            <TimezoneForm initial={progress.timezone} />
           </section>
         </>
       )}
