@@ -4340,6 +4340,10 @@ grant execute on function public.set_my_timezone(text) to authenticated;
 alter table public.videos
   add column if not exists repost_count integer not null default 0;
 
+-- Extend every normal feed/profile card with the viewer's repost state.
+
+
+
 create table if not exists public.reposts (
   user_id uuid not null references public.profiles(id) on delete cascade,
   video_id uuid not null references public.videos(id) on delete cascade,
@@ -4349,6 +4353,55 @@ create table if not exists public.reposts (
 
 create index if not exists reposts_user_idx on public.reposts(user_id, created_at desc);
 create index if not exists reposts_video_idx on public.reposts(video_id, created_at desc);
+
+-- Extend every normal feed/profile card with the viewer's repost state.
+create or replace function public.video_card(v public.videos, viewer uuid)
+returns jsonb
+language sql
+stable
+security definer
+set search_path = ''
+as $q$
+  select jsonb_build_object(
+    'id', v.id,
+    'caption', v.caption,
+    'hashtags', to_jsonb(v.hashtags),
+    'visibility', v.visibility,
+    'status', v.status,
+    'duration_s', v.duration_s,
+    'width', v.width,
+    'height', v.height,
+    'hls_key', v.hls_key,
+    'thumbnail_url', v.thumbnail_url,
+    'like_count', v.like_count,
+    'comment_count', v.comment_count,
+    'view_count', v.view_count,
+    'share_count', v.share_count,
+    'save_count', v.save_count,
+    'repost_count', v.repost_count,
+    'published_at', v.published_at,
+    'created_at', v.created_at,
+    'removed', v.removed_at is not null,
+    'author', jsonb_build_object(
+      'id', p.id,
+      'username', p.username,
+      'display_name', p.display_name,
+      'avatar_url', p.avatar_url,
+      'verified', p.verified
+    ),
+    'liked', viewer is not null
+      and exists (select 1 from public.likes l where l.video_id = v.id and l.user_id = viewer),
+    'following', viewer is not null
+      and exists (select 1 from public.follows f where f.follower_id = viewer and f.followee_id = v.owner_id),
+    'saved', viewer is not null
+      and exists (select 1 from public.saves s where s.video_id = v.id and s.user_id = viewer),
+    'reposted', viewer is not null
+      and exists (select 1 from public.reposts r where r.video_id = v.id and r.user_id = viewer),
+    'mine', viewer is not null and v.owner_id = viewer
+  )
+  from public.profiles p
+  where p.id = v.owner_id;
+$q$;
 
 alter table public.reposts enable row level security;
 drop policy if exists "public reposts of public clips are readable" on public.reposts;
@@ -4699,7 +4752,7 @@ declare
   calendar jsonb;
 begin
   if me is null then raise exception 'not_signed_in' using errcode = 'P0001'; end if;
-  if not (public.flag_on('streaks', me) or public.flag_on('prestige', me)) then
+  if not (public.flag_on('streaks', me) or public.flag_on('prestige', me) or public.flag_on('collection', me)) then
     raise exception 'streaks_off' using errcode = 'P0001';
   end if;
   if public.is_banned(me) then raise exception 'banned' using errcode = 'P0001'; end if;
