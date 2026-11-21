@@ -1,0 +1,41 @@
+import { notFound, redirect } from "next/navigation";
+import { connection } from "next/server";
+import { Suspense } from "react";
+import Link from "next/link";
+import { DbNotConnected } from "@/components/auth/AuthCard";
+import { getCurrentUser } from "@/lib/auth";
+import { flagOn } from "@/lib/flags";
+import { readSupabaseConfig } from "@/lib/supabase/env";
+import { createClient } from "@/lib/supabase/server";
+
+export const metadata = { title: "Your Reposts | YapTok" };
+
+type Repost = { id: string; caption: string; thumbnail_url: string | null; reposted_at: string; author?: { username?: string } };
+
+async function RepostsContent() {
+  await connection();
+  if (!readSupabaseConfig()) return <DbNotConnected />;
+  const user = await getCurrentUser();
+  if (!(await flagOn("reposts", user?.id ?? null))) notFound();
+  if (!user) redirect("/login?next=/reposts");
+  const supabase = await createClient();
+  const { data, error } = supabase ? await supabase.rpc("my_reposts", { p_username: user.username }) : { data: null, error: true };
+  const rows: Repost[] = Array.isArray(data) ? data.filter((row): row is Repost => !!row && typeof row === "object" && typeof (row as Repost).id === "string") : [];
+  return (
+    <main className="mx-auto max-w-[900px] px-4 py-8 sm:px-6">
+      <div className="flex items-center justify-between gap-3"><div><p className="text-[12px] font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">Shared, not copied</p><h1 className="mt-1 text-[28px] font-semibold text-text">Your Reposts</h1></div><Link href="/progress" className="btn-secondary">Rewards</Link></div>
+      {error ? <p role="alert" className="mt-6 text-[14px] text-text-2">Reposts could not be loaded.</p> : rows.length === 0 ? <p className="mt-8 rounded-2xl border border-divider p-5 text-[14px] text-text-2">You have not reposted any clips yet. Repost a public clip from its action rail and it will appear here.</p> : (
+        <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
+          {rows.map((row) => <Link key={row.id} href={`/v/${row.id}`} className="overflow-hidden rounded-2xl border border-divider bg-panel">
+            {row.thumbnail_url ? <img src={row.thumbnail_url} alt="" className="aspect-[9/16] w-full bg-hover object-cover" /> : <div className="aspect-[9/16] bg-hover" />}
+            <div className="p-3"><p className="line-clamp-2 text-[13px] text-text">{row.caption || "Video"}</p><p className="mt-1 text-[11px] text-text-3">Original by @{row.author?.username ?? "creator"}</p></div>
+          </Link>)}
+        </div>
+      )}
+    </main>
+  );
+}
+
+export default function RepostsPage() {
+  return <Suspense fallback={<div className="mx-auto mt-8 h-48 max-w-[860px] rounded-2xl bg-skeleton" aria-hidden />}><RepostsContent /></Suspense>;
+}
