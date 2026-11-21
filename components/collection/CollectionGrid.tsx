@@ -14,6 +14,32 @@ type Cosmetic = {
 };
 type Owned = { cosmetic_id: string; equipped: boolean };
 
+function CosmeticPreview({ item }: { item: Cosmetic }) {
+  const effect = typeof item.style?.effect === "string" ? item.style.effect : "spark";
+  const palette: Record<string, string> = {
+    spark: "from-cyan-400/30 via-blue-500/10 to-transparent",
+    neon: "from-fuchsia-500/40 via-violet-500/20 to-cyan-400/20",
+    glitch: "from-red-500/30 via-cyan-400/20 to-violet-500/30",
+    galaxy: "from-indigo-500/40 via-fuchsia-500/25 to-sky-400/20",
+    sunset: "from-orange-500/40 via-rose-500/30 to-amber-300/20",
+    aurora: "from-emerald-400/35 via-cyan-400/30 to-violet-500/30",
+    particles: "from-sky-400/25 via-violet-500/20 to-transparent",
+    chrome: "from-slate-200/50 via-slate-500/20 to-slate-300/30",
+    lightning: "from-yellow-300/35 via-blue-500/20 to-indigo-500/30",
+  };
+  const symbol: Record<string, string> = {
+    spark: "✦", neon: "◉", glitch: "▧", galaxy: "✧", sunset: "☼",
+    aurora: "✺", particles: "⁕", chrome: "◆", lightning: "ϟ",
+  };
+  const motion = ["neon", "glitch", "galaxy", "aurora", "particles", "lightning"].includes(effect);
+  return (
+    <div className={`mt-4 flex h-20 items-center justify-center gap-3 overflow-hidden rounded-xl border border-white/10 bg-gradient-to-br ${palette[effect] ?? palette.spark}`}>
+      <span className={`text-[34px] text-white drop-shadow-lg ${motion ? "motion-safe:animate-pulse motion-reduce:animate-none" : ""}`}>{symbol[effect] ?? "✦"}</span>
+      <span className="text-[13px] font-semibold tracking-wide text-white drop-shadow">{item.name}</span>
+    </div>
+  );
+}
+
 export function CollectionGrid({ items, owned, xp, level }: { items: Cosmetic[]; owned: Owned[]; xp: number; level: number }) {
   const [unlocked, setUnlocked] = useState(() => new Set(owned.map((item) => item.cosmetic_id)));
   const [equipped, setEquipped] = useState(() => new Set(owned.filter((item) => item.equipped).map((item) => item.cosmetic_id)));
@@ -67,6 +93,7 @@ export function CollectionGrid({ items, owned, xp, level }: { items: Cosmetic[];
                 </div>
                 <span className="rounded-full bg-hover px-2.5 py-1 text-[11px] text-text-2">{has ? "Unlocked" : "Locked"}</span>
               </div>
+              <CosmeticPreview item={item} />
               <p className="mt-3 text-[13px] text-text-2">Level {item.unlock_level} · {item.required_xp.toLocaleString()} XP</p>
               <div className="mt-4">
                 {has ? (
